@@ -1,0 +1,18 @@
+OS Mini Project
+
+Group Members:
+Tanysa Bobechko, Dominik Nowakowski, Rohan Mandi, Violetta Wojtas
+
+Concept:
+OS for Environmental Sustainability
+- Goal: Build a kernel-level monitoring framework in xv6 that tracks environmental and energy-related metrics.
+- Simulate environmental sensors (CPU load, temperature) at the kernel level, safely aggregate data with synchronization, expose it via a system call, and allow user programs to make sustainability-aware decisions.
+- Metrics: CPU load, temperature, energy consumption, etc...
+
+Features:
+1. Sensor & Kernel Data Injection
+2. Synchronized Data Management
+3. Environment-Aware Scheduler 
+4. Monitoring System Call
+5. Persistent Data Logging
+
