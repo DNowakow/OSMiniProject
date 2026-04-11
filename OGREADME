@@ -1,18 +1,112 @@
+SE3313 - Operating Systems
 OS Mini Project
 
-Group Members:
-Tanysa Bobechko, Dominik Nowakowski, Rohan Mandi, Violetta Wojtas
+Group 21
+Team Members: Tanysa Bobechko, Dominik Nowakowski, Rohan Mandi, Violetta Wojtas
 
-Concept:
-OS for Environmental Sustainability
-- Goal: Build a kernel-level monitoring framework in xv6 that tracks environmental and energy-related metrics.
-- Simulate environmental sensors (CPU load, temperature) at the kernel level, safely aggregate data with synchronization, expose it via a system call, and allow user programs to make sustainability-aware decisions.
-- Metrics: CPU load, temperature, energy consumption, etc...
+Concept: 
+Environmental Monitoring System in xv6
+~ This project is an extension of xv6-riscv that embeds kernel-level environmental monitoring, synchronization-safe data management, an adaptive scheduler, and persistent data logging 
+~ demonstrating how OS design choices can directly support environmental sustainability.
 
 Features:
-1. Sensor & Kernel Data Injection
-2. Synchronized Data Management
-3. Environment-Aware Scheduler 
-4. Monitoring System Call
-5. Persistent Data Logging
+1. Sensor & Kernel Data Injection ~ User-space sensor process simulates CPU load and temperature, injects data into the kernel via `setsensordata()` syscall 
+2. Synchronized Data Management ~ Spinlock-protected `env_state` struct ensures safe concurrent read/write access from multiple processes 
+3. Environment-Aware Scheduler ~ Modified `scheduler()` reads live environmental data and throttles low-priority processes under high CPU load or temperature 
+4. Monitoring System Call ~ New `getsensordata()` syscall allows any user-space program to read live kernel environmental state 
+5. Persistent Data Logging ~ Logger program polls sensor data and appends CSV entries to `envlog.txt` in the xv6 filesystem 
 
+Demo Instructions:
+
+~~ Step 1 ~ Install Dependencies ~~
+Ubuntu / WSL:
+sudo apt-get update
+sudo apt-get install -y gcc-riscv64-linux-gnu qemu-system-misc qemu-utils git make
+
+macOS (requires Homebrew):
+brew install qemu riscv-tools
+
+~~ Step 2 ~ Clone and Build ~~
+Start by 
+git clone https://github.com/DNowakow/OSMiniProject.git
+cd OSMiniProject
+make clean
+make qemu
+
+At this point you should see the xv6 shell prompt: $
+
+~~ Step 3 ~ Demo Feature 01: Sensor Injection ~~
+Inside the xv6 shell, run the sensor process. It will inject 20 rounds of simulated CPU load and temperature readings into the kernel:
+$ sensor
+
+Expected Output: sensor: injecting cpu_load=NN temp=NN printed every 10 ticks.
+
+~~ Step 4 ~ Demo Feature 02 + 04: Spinlock Safety and System Call ~~
+Run two sensor processes simultaneously to stress-test spinlock correctness, then read back the live data via the getsensordata() syscall using the monitor program:
+$ sensor &
+Do not wait for sensor to finish. Immediately after, invoke:
+$ monitor
+
+Expected Output: monitor: cpu_load=NN  temperature=NN  updates=NN
+
+~~ Step 5 ~ Demo Feature 03: Environment-Aware Scheduler ~~
+The scheduler automatically adapts as sensor data flows in. With the sensor running in the background, standard xv6 commands still execute, proving the scheduler does not starve processes even under high simulated load:
+$ sensor &
+Do not wait for sensor to finish. Immediately after, invoke both:
+$ ls
+$ echo hello
+
+ls and echo hello should both complete normally while sensor injection messages appear
+
+~~ Step 6 ~ Demo Feature 05: Persistent Data Logging ~~
+Run the full end-to-end pipeline: sensor injecting data in the background, logger writing it to disk, then inspect the resulting CSV file:
+$ sensor &
+Do not wait for sensor to finish. Immediately after, invoke:
+$ logger
+$ cat envlog.txt
+
+Expected Output: envlog.txt contains a CSV header followed by 30 data rows. 
+
+Sample Output:
+tick, 	cpu_load, 	temperature
+1,	47,		62
+2,	83,		71
+... (30 rows total)
+
+~~ Step 7 - Run Unit Tests ~~
+Run the full unit test suite to ensure all 7 tests pass:
+$ envtest
+
+Expected Output: === Results: 7 passed, 0 failed ===
+
+~~ Demo Complete ~~
+To exit xv6, press Ctrl+A then X
+
+
+New Files:
+`kernel/envstate.h` ~ Defines `struct env_state` (cpu_load, temperature, tick_count) 
+`kernel/envstate.c` ~ Spinlock-protected `envstate_init()`, `envstate_update()`, `envstate_read()` 
+`user/sensor.c` ~ Sensor simulation process 
+`user/monitor.c` ~ Live data display via `getsensordata()` 
+`user/logger.c` ~ CSV logger writing to `envlog.txt` 
+`user/envtest.c` ~ 7-test unit test suite 
+
+
+Modified Files:
+`kernel/main.c` ~ Calls `envstate_init()` on boot 
+`kernel/defs.h` ~ Adds envstate function declarations 
+`kernel/syscall.h` ~ Registers syscall numbers 23 and 24 
+`kernel/syscall.c` ~ Wires syscalls into dispatch table 
+`kernel/sysproc.c` ~ Implements `sys_setsensordata()` and `sys_getsensordata()` 
+`kernel/proc.c` ~ Environment-aware scheduler logic 
+`user/usys.pl` ~ Syscall stubs for setsensordata and getsensordata 
+`user/user.h` ~ `struct env_state` definition and syscall prototypes 
+`Makefile` ~ Adds all new kernel objects and user programs 
+
+
+Team Contributions:
+Dominik ~ Feature 01 — `env_state` struct, kernel data structure, init/read/write functions 
+Tanysa ~ Feature 02 — Spinlock verification, `sensor.c` simulation process 
+Violetta ~ Feature 04 — `setsensordata` / `getsensordata` syscalls, `monitor.c`, `envtest.c` 
+Rohan ~ Feature 03 — Environment-aware scheduler in `kernel/proc.c` 
+All ~ Feature 05 — Persistent logger, end-to-end integration, documentation 

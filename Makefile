@@ -145,6 +145,7 @@ UPROGS=\
 	$U/_zombie\
 	$U/_logstress\
 	$U/_forphan\
+	$U/_sensor\
 	$U/_monitor\
 	$U/_logger\
 	$U/_envtest\

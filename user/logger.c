@@ -34,25 +34,25 @@ main(int argc, char *argv[])
     exit(1);
   }
 
-  write(fd, "tick,cpu_load,temperature\n", 26);
+  write(fd, "tick\t|\tcpu_load\t|temperature\n", 30);
 
-  for(i = 0; i < 30; i++){
+  for(i = 0; i < 21; i++){
     if(getsensordata(&state) < 0){
       printf("logger: getsensordata failed\n");
       break;
     }
 
     write_int(fd, state.tick_count);
-    write(fd, ",", 1);
+    write(fd, "\t|\t", 3);
     write_int(fd, state.cpu_load);
-    write(fd, ",", 1);
+    write(fd, "\t|\t", 3);
     write_int(fd, state.temperature);
     write(fd, "\n", 1);
 
     printf("logger: entry %d -- tick=%d cpu=%d temp=%d\n",
            i, state.tick_count, state.cpu_load, state.temperature);
 
-    sleep(15);
+    pause(15);
   }
 
   close(fd);

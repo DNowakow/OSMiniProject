@@ -17,7 +17,7 @@ main(int argc, char *argv[])
     }
     printf("monitor: cpu_load=%d  temperature=%d  updates=%d\n",
            state.cpu_load, state.temperature, state.tick_count);
-    sleep(20);
+    pause(20);
   }
 
   printf("monitor: done\n");
