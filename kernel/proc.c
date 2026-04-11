@@ -5,6 +5,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include "envstate.h"
 
 struct cpu cpus[NCPU];
 
@@ -429,35 +430,41 @@ scheduler(void)
 
   c->proc = 0;
   for(;;){
-    // The most recent process to run may have had interrupts
-    // turned off; enable them to avoid a deadlock if all
-    // processes are waiting. Then turn them back off
-    // to avoid a possible race between an interrupt
-    // and wfi.
     intr_on();
-    intr_off();
 
-    int found = 0;
+    // --- environment-aware throttling ---
+    struct env_state cur_env;
+    envstate_read(&cur_env);
+
+    int skip_ticks = 0;
+    if(cur_env.cpu_load > 80)    skip_ticks += 2;
+    if(cur_env.temperature > 75) skip_ticks += 1;
+
+    if(skip_ticks > 0){
+      for(int s = 0; s < skip_ticks * 100000; s++){
+        asm volatile("nop");
+      }
+    }
+    // --- end environment-aware throttling ---
+
     for(p = proc; p < &proc[NPROC]; p++) {
       acquire(&p->lock);
       if(p->state == RUNNABLE) {
-        // Switch to chosen process.  It is the process's job
-        // to release its lock and then reacquire it
-        // before jumping back to us.
+
+        // skip low-priority processes under extreme load
+        if(cur_env.cpu_load > 90 && p->pid > 3){
+          if(cur_env.tick_count % 3 != 0){
+            release(&p->lock);
+            continue;
+          }
+        }
+
         p->state = RUNNING;
         c->proc = p;
         swtch(&c->context, &p->context);
-
-        // Process is done running for now.
-        // It should have changed its p->state before coming back.
         c->proc = 0;
-        found = 1;
       }
       release(&p->lock);
-    }
-    if(found == 0) {
-      // nothing to run; stop running on this core until an interrupt.
-      asm volatile("wfi");
     }
   }
 }
