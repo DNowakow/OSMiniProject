@@ -1,6 +1,11 @@
 #define SBRK_ERROR ((char *)-1)
 
 struct stat;
+struct env_state {
+	int cpu_load;
+	int temperature;
+	int tick_count;
+};
 
 // system calls
 int fork(void);
@@ -24,6 +29,8 @@ int getpid(void);
 char* sys_sbrk(int,int);
 int pause(int);
 int uptime(void);
+int setsensordata(int, int);
+int getsensordata(struct env_state*);
 
 // ulib.c
 int stat(const char*, struct stat*);
