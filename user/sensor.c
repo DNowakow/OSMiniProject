@@ -26,7 +26,7 @@ main(int argc, char *argv[])
     printf("sensor: injecting cpu_load=%d temp=%d\n", cpu_load, temp);
     setsensordata(cpu_load, temp);
 
-    sleep(10);
+    pause(10);
   }
 
   printf("sensor: done\n");
