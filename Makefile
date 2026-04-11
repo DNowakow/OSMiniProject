@@ -145,9 +145,9 @@ UPROGS=\
 	$U/_zombie\
 	$U/_logstress\
 	$U/_forphan\
-	$U/_sensor\
-	$U/_logger\
 	$U/_monitor\
+	$U/_logger\
+	$U/_envtest\
 	$U/_dorphan\
 
 fs.img: mkfs/mkfs README $(UPROGS)
