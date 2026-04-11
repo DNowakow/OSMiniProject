@@ -183,3 +183,8 @@ void            virtio_disk_intr(void);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
+
+// envstate.c
+void envstate_init(void);
+void envstate_update(int, int);
+void envstate_read(struct env_state*);
